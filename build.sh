@@ -9,8 +9,8 @@ g++ -pedantic \
 "-ftemplate-depth=1024" \
 -mavx \
 -mavx2 \
--fsanitize=undefined \
--c kraken.cpp \
+kraken.cpp \
 -O3 \
+-shared \
 -fPIC \
 -o build/kraken.so

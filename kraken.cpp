@@ -2854,9 +2854,9 @@ char arg_direction;
 char *verifyfolder;
 
 
-EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
+EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst, int level) {
 
-    int outbytes = CompressBlock_Kraken(src, dst, src_len, arg_level, 0, 0, 0);
+    int outbytes = CompressBlock_Kraken(src, dst, src_len, level, 0, 0, 0);
 
     if (outbytes < 0) error("compress failed");
 

@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 project(kraken)
 
 set(CMAKE_CXX_STANDARD 14)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+# disable on win build
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 function(add_cxx_compiler_flags)
     set(CMAKE_REQUIRED_QUIET true)

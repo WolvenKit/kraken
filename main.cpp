@@ -29,25 +29,25 @@ byte *load_file(const char *filename, int *size) {
 }
 
 int main() {
-    const char *curfile = "E:\\GitHub\\kraken\\oodle.txt";
+    const char *curfile = "/Users/ghost/Documents/Developer/kraken/oodle.txt";
 
     int input_size;
     byte *input = load_file(curfile, &input_size);
 
-    byte *output = NULL;
-    output = new byte[input_size + 65536];
+    byte *output = new byte[input_size + 65536];
+    if (!output) error("memory error", curfile);
+    *(uint64*)output = input_size;
 
-    int outbytes1 = Kraken_Compress( input, input_size, output);
-    int outbytes = CompressBlock(8, input, output + 8, input_size, 2, 0, 0, 0);
+    int outbytes = Kraken_Compress( input, input_size, output + 8, 5);
+    if (outbytes < 0) error("compress failed", curfile);
+    outbytes += 8;
 
-    std::ofstream file("E:\\GitHub\\kraken\\oodle.kark", std::ios::binary);
-
-    if (file)
-    {
-        file.write((char*) output, sizeof(output));
-    }
-
-    file.close();
+    const char *destfile = "/Users/ghost/Documents/Developer/kraken/oodle.kark";
+    FILE *f = fopen(destfile, "wb");
+    if (!f) error("file open for write error", destfile);
+    if (fwrite(output, 1, outbytes, f) != outbytes)
+        error("file write error", destfile);
+    fclose(f);
 
     return 0;
 }

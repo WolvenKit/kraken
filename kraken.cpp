@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "kraken.h"
+#include "compress.h"
 
 // Header in front of each 256k block
 typedef struct KrakenHeader {
@@ -2899,6 +2900,58 @@ EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
 	return dst_len;
 }
 #endif
+
+
+
+int CompressBlock_Kraken(uint8 *src_in, uint8 *dst_in, int src_size, int level
+                         //, const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm
+                         ) {
+    LzCoder coder = { 0 };
+    //if (!compressopts)
+    //    compressopts = GetDefaultCompressOpts(level);
+
+    //if (src_window_base == NULL)
+    //    src_window_base = src_in;
+
+    coder.last_chunk_type = -1;
+    SetupEncoder_Kraken(&coder, src_size, level/*, compressopts, src_window_base*/, src_in);
+    int n = Compress(&coder, src_in, dst_in, src_size/*, src_window_base, lrm*/);
+    return n;
+}
+
+int CompressBlock(int codec_id, uint8 *src_in, uint8 *dst_in, int src_size, int level
+        //, const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm
+) {
+    //return CompressBlock_Kraken(src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
+    return CompressBlock_Kraken(src_in, dst_in, src_size, level/*, 0, 0, 0*/);
+}
+
+
+EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
+
+    //int input_size;
+    //byte *input = load_file(curfile, &input_size);
+
+    byte *output = NULL;
+    int outbytes = 0;
+    output = new byte[src_len + 65536];
+    if (!output) error("memory error");
+    *(uint64 *) output = src_len;
+    // QueryPerformanceCounter((LARGE_INTEGER*)&start);
+
+    outbytes = CompressBlock(arg_compressor, src, output + 8, src_len, arg_level
+                             //, 0, 0, 0
+                             );
+
+    if (outbytes < 0) error("compress failed");
+    outbytes += 8;
+    //QueryPerformanceCounter((LARGE_INTEGER*)&end);
+    //QueryPerformanceFrequency((LARGE_INTEGER*)&freq);
+
+    return outbytes;
+}
+
+
 
 bool Verify(const char *filename, uint8 *output, int outbytes, const char *curfile) {
 	int test_size;

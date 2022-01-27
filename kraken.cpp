@@ -2835,26 +2835,9 @@ FAIL:
 // The decompressor will write outside of the target buffer.
 #define SAFE_SPACE 64
 
-void error(const char *s, const char *curfile = NULL) {
-	if (curfile)
-		fprintf(stderr, "%s: ", curfile);
+void error(const char *s) {
 	fprintf(stderr, "%s\n", s);
 	exit(1);
-}
-
-
-byte *load_file(const char *filename, int *size) {
-	FILE *f = fopen(filename, "rb");
-	if (!f) error("file open error", filename);
-	fseek(f, 0, SEEK_END);
-	int packed_size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	byte *input = new byte[packed_size];
-	if (!input) error("memory error", filename);
-	if (fread(input, 1, packed_size, f) != packed_size) error("error reading", filename);
-	fclose(f);
-	*size = packed_size;
-	return input;
 }
 
 enum {
@@ -2866,32 +2849,16 @@ enum {
 };
 
 bool arg_stdout, arg_force, arg_quiet, arg_dll;
-int arg_compressor = kCompressor_Kraken, arg_level = 4;
+int arg_compressor = kCompressor_Kraken, arg_level = 5;
 char arg_direction;
 char *verifyfolder;
 
 
 EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
 
-    //int input_size;
-    //byte *input = load_file(curfile, &input_size);
-
-    byte *output = NULL;
-    int outbytes = 0;
-    output = new byte[src_len + 65536];
-    if (!output) error("memory error");
-    *(uint64 *) output = src_len;
-    // QueryPerformanceCounter((LARGE_INTEGER*)&start);
-
-//    outbytes = CompressBlock(arg_compressor, src, output + 8, src_len, arg_level
-//                             //, 0, 0, 0
-//                             );
-    outbytes = CompressBlock_Kraken(src, output + 8, src_len, arg_level, 0, 0, 0);
+    int outbytes = CompressBlock_Kraken(src, dst, src_len, arg_level, 0, 0, 0);
 
     if (outbytes < 0) error("compress failed");
-    outbytes += 8;
-    //QueryPerformanceCounter((LARGE_INTEGER*)&end);
-    //QueryPerformanceFrequency((LARGE_INTEGER*)&freq);
 
     return outbytes;
 }

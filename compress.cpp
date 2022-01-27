@@ -416,18 +416,18 @@ int CompressBlock_Kraken(uint8 *src_in, uint8 *dst_in, int src_size, int level,
 //  int n = Compress(&coder, src_in, dst_in, src_size, src_window_base, lrm);
 //  return n;
 //}
-//
-//
-//int CompressBlock(int codec_id, uint8 *src_in, uint8 *dst_in, int src_size, int level,
-//                  const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm) {
-//  switch (codec_id) {
-//  case kCompressorKraken: return CompressBlock_Kraken(src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
+
+
+int CompressBlock(int codec_id, uint8 *src_in, uint8 *dst_in, int src_size, int level,
+                  const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm) {
+  switch (codec_id) {
+  case kCompressorKraken: return CompressBlock_Kraken(src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
 //  case kCompressorLeviathan: return CompressBlock_Leviathan(src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
 //  case kCompressorMermaid:
 //  case kCompressorSelkie: return CompressBlock_Mermaid(codec_id, src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
-//  default:
-//    return -1;
-//  }
-//
-//}
+  default:
+    return -1;
+  }
+
+}
 

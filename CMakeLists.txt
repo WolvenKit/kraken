@@ -1,8 +1,25 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.5)
 project(kraken)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+set(CMAKE_CXX_STANDARD 14)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+
+function(add_cxx_compiler_flags)
+    set(CMAKE_REQUIRED_QUIET true)
+    include(CheckCXXCompilerFlag)
+    set(flags ${CMAKE_CXX_FLAGS})
+    foreach(flag ${ARGV})
+        string(REGEX REPLACE "[^_A-Za-z0-9]" "_" stripped_flag "${flag}")
+        set(var "CXX_COMPILER_FLAG_${stripped_flag}")
+        check_cxx_compiler_flag("${flag}" "${var}")
+        if(${var})
+            set(flags "${flags} ${flag}")
+        endif()
+    endforeach()
+    set(CMAKE_CXX_FLAGS ${flags} PARENT_SCOPE)
+endfunction()
+add_cxx_compiler_flags(-pedantic -fno-permissive -pedantic-errors -Wall -Wextra -Wshadow -Wstrict-aliasing -Wno-misleading-indentation "-ftemplate-depth=1024")
+
 
 include_directories(.)
 

@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "kraken.h"
 #include "compress.h"
+#include "compr_kraken.h"
+#include "compr_match_finder.h"
 
 // Header in front of each 256k block
 typedef struct KrakenHeader {
@@ -137,17 +139,17 @@ void FreeAligned(void *p) {
 	free(((void**)p)[-1]);
 }
 
-uint32 BSR(uint32 x) {
-	unsigned long index;
-	_BitScanReverse(&index, x);
-	return index;
-}
-
-uint32 BSF(uint32 x) {
-	unsigned long index;
-	_BitScanForward(&index, x);
-	return index;
-}
+//uint32 BSR(uint32 x) {
+//	unsigned long index;
+//	_BitScanReverse(&index, x);
+//	return index;
+//}
+//
+//uint32 BSF(uint32 x) {
+//	unsigned long index;
+//	_BitScanForward(&index, x);
+//	return index;
+//}
 
 // Read more bytes to make sure we always have at least 24 bits in |bits|.
 void BitReader_Refill(BitReader *bits) {
@@ -2868,64 +2870,6 @@ int arg_compressor = kCompressor_Kraken, arg_level = 4;
 char arg_direction;
 char *verifyfolder;
 
-#ifdef _MSC_VER
-typedef int WINAPI OodLZ_CompressFunc(int codec, uint8* src_buf, size_t src_len, uint8* dst_buf, int level, void* opts, size_t offs, size_t unused, void* scratch, size_t scratch_size);
-OodLZ_CompressFunc* OodLZ_Compress;
-
-typedef int WINAPI OodLZ_DecompressFunc(uint8* src_buf, int src_len, uint8* dst, size_t dst_size, int fuzz, int crc, int verbose, uint8* dst_base, size_t e, void* cb, void* cb_ctx, void* scratch, size_t scratch_size, int threadPhase);
-OodLZ_DecompressFunc* OodLZ_Decompress;
-
-HINSTANCE pickDll() {
-	HINSTANCE mod = NULL;
-	int version = 9;
-	char DLL[] = "oo2core_1_win64.dll";
-	while (version >= 0) {
-		DLL[8] = version + '0';
-		mod = LoadLibraryA(DLL);
-		if (mod) break;
-		version--;
-	}
-
-	return mod;
-}
-
-EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
-	HINSTANCE mod = pickDll();
-	if (!mod) return -1;
-	char COMPFUNCNAME[] = "XXdleLZ_Compress";
-	COMPFUNCNAME[0] = 'O';
-	COMPFUNCNAME[1] = 'o';
-	OodLZ_Compress = (OodLZ_CompressFunc*)GetProcAddress(mod, COMPFUNCNAME);
-	int dst_len = OodLZ_Compress(arg_compressor, src, src_len, dst, arg_level, 0, 0, 0, 0, 0);
-	return dst_len;
-}
-#endif
-
-
-
-int CompressBlock_Kraken(uint8 *src_in, uint8 *dst_in, int src_size, int level
-                         //, const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm
-                         ) {
-    LzCoder coder = { 0 };
-    //if (!compressopts)
-    //    compressopts = GetDefaultCompressOpts(level);
-
-    //if (src_window_base == NULL)
-    //    src_window_base = src_in;
-
-    coder.last_chunk_type = -1;
-    SetupEncoder_Kraken(&coder, src_size, level/*, compressopts, src_window_base*/, src_in);
-    int n = Compress(&coder, src_in, dst_in, src_size/*, src_window_base, lrm*/);
-    return n;
-}
-
-int CompressBlock(int codec_id, uint8 *src_in, uint8 *dst_in, int src_size, int level
-        //, const CompressOptions *compressopts, uint8 *src_window_base, LRMCascade *lrm
-) {
-    //return CompressBlock_Kraken(src_in, dst_in, src_size, level, compressopts, src_window_base, lrm);
-    return CompressBlock_Kraken(src_in, dst_in, src_size, level/*, 0, 0, 0*/);
-}
-
 
 EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
 
@@ -2939,9 +2883,10 @@ EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
     *(uint64 *) output = src_len;
     // QueryPerformanceCounter((LARGE_INTEGER*)&start);
 
-    outbytes = CompressBlock(arg_compressor, src, output + 8, src_len, arg_level
-                             //, 0, 0, 0
-                             );
+//    outbytes = CompressBlock(arg_compressor, src, output + 8, src_len, arg_level
+//                             //, 0, 0, 0
+//                             );
+    outbytes = CompressBlock_Kraken(src, output + 8, src_len, arg_level, 0, 0, 0);
 
     if (outbytes < 0) error("compress failed");
     outbytes += 8;
@@ -2953,22 +2898,22 @@ EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
 
 
 
-bool Verify(const char *filename, uint8 *output, int outbytes, const char *curfile) {
-	int test_size;
-	byte *test = load_file(filename, &test_size);
-	if (!test) {
-		fprintf(stderr, "file open error: %s\n", filename);
-		return false;
-	}
-	if (test_size != outbytes) {
-		fprintf(stderr, "%s: ERROR: File size difference: %d vs %d\n", filename, outbytes, test_size);
-		return false;
-	}
-	for (int i = 0; i != test_size; i++) {
-		if (test[i] != output[i]) {
-			fprintf(stderr, "%s: ERROR: File difference at 0x%x. Was %d instead of %d\n", curfile, i, output[i], test[i]);
-			return false;
-		}
-	}
-	return true;
-}
+//bool Verify(const char *filename, uint8 *output, int outbytes, const char *curfile) {
+//	int test_size;
+//	byte *test = load_file(filename, &test_size);
+//	if (!test) {
+//		fprintf(stderr, "file open error: %s\n", filename);
+//		return false;
+//	}
+//	if (test_size != outbytes) {
+//		fprintf(stderr, "%s: ERROR: File size difference: %d vs %d\n", filename, outbytes, test_size);
+//		return false;
+//	}
+//	for (int i = 0; i != test_size; i++) {
+//		if (test[i] != output[i]) {
+//			fprintf(stderr, "%s: ERROR: File difference at 0x%x. Was %d instead of %d\n", curfile, i, output[i], test[i]);
+//			return false;
+//		}
+//	}
+//	return true;
+//}

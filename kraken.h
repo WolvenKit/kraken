@@ -22,7 +22,7 @@
 	#include <stddef.h>
 	#ifdef __GNUC__
 		// GNU C supports forcing inline, just via a different syntax.
-		#define __forceinline inline __attribute__((always_inline))
+		//#define __forceinline inline __attribute__((always_inline))
 	#else
 		// Fall back to the standardized inline keyword for unknown dialects
 		#define __forceinline inline
@@ -34,9 +34,9 @@
 	#define _BitScanForward(dst, x) (*(dst) = __builtin_ctz(x))
 	#define _BitScanReverse(dst, x) (*(dst) = (__builtin_clz(x) ^ 31))
 
-	static inline uint32_t _rotl(uint32_t x, int n) {
-	  return (((x) << (n)) | ((x) >> (32-(n))));
-	}
+//	static inline uint32_t _rotl(uint32_t x, int n) {
+//	  return (((x) << (n)) | ((x) >> (32-(n))));
+//	}
 #endif
 
 // Windows has this enabled implicitly (and uses different headers), GNU C compilers generally require passing an additional flag, so check for that first.

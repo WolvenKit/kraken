@@ -29,7 +29,8 @@ byte *load_file(const char *filename, int *size) {
 }
 
 int main() {
-    const char *curfile = "/Users/ghost/Documents/Developer/kraken/oodle.txt";
+    //const char *curfile = "/Users/ghost/Documents/Developer/kraken/oodle.txt";
+    const char *curfile = "E:\\GitHub\\kraken\\oodle.txt";
 
     int input_size;
     byte *input = load_file(curfile, &input_size);
@@ -38,11 +39,13 @@ int main() {
     if (!output) error("memory error", curfile);
     *(uint64*)output = input_size;
 
-    int outbytes = Kraken_Compress( input, input_size, output + 8, 5);
+    int outbytes = Kraken_Compress( input, input_size, output + 8, 2);
     if (outbytes < 0) error("compress failed", curfile);
     outbytes += 8;
 
-    const char *destfile = "/Users/ghost/Documents/Developer/kraken/oodle.kark";
+    //const char *destfile = "/Users/ghost/Documents/Developer/kraken/oodle.kark";
+    const char *destfile = "E:\\GitHub\\kraken\\oodle.kark";
+
     FILE *f = fopen(destfile, "wb");
     if (!f) error("file open for write error", destfile);
     if (fwrite(output, 1, outbytes, f) != outbytes)

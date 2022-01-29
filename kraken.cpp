@@ -17,6 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "kraken.h"
+#include "compress.h"
+#include "compr_kraken.h"
+#include "compr_match_finder.h"
 
 // Header in front of each 256k block
 typedef struct KrakenHeader {
@@ -136,17 +139,17 @@ void FreeAligned(void *p) {
 	free(((void**)p)[-1]);
 }
 
-uint32 BSR(uint32 x) {
-	unsigned long index;
-	_BitScanReverse(&index, x);
-	return index;
-}
-
-uint32 BSF(uint32 x) {
-	unsigned long index;
-	_BitScanForward(&index, x);
-	return index;
-}
+//uint32 BSR(uint32 x) {
+//	unsigned long index;
+//	_BitScanReverse(&index, x);
+//	return index;
+//}
+//
+//uint32 BSF(uint32 x) {
+//	unsigned long index;
+//	_BitScanForward(&index, x);
+//	return index;
+//}
 
 // Read more bytes to make sure we always have at least 24 bits in |bits|.
 void BitReader_Refill(BitReader *bits) {
@@ -2832,26 +2835,9 @@ FAIL:
 // The decompressor will write outside of the target buffer.
 #define SAFE_SPACE 64
 
-void error(const char *s, const char *curfile = NULL) {
-	if (curfile)
-		fprintf(stderr, "%s: ", curfile);
+void error(const char *s) {
 	fprintf(stderr, "%s\n", s);
 	exit(1);
-}
-
-
-byte *load_file(const char *filename, int *size) {
-	FILE *f = fopen(filename, "rb");
-	if (!f) error("file open error", filename);
-	fseek(f, 0, SEEK_END);
-	int packed_size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	byte *input = new byte[packed_size];
-	if (!input) error("memory error", filename);
-	if (fread(input, 1, packed_size, f) != packed_size) error("error reading", filename);
-	fclose(f);
-	*size = packed_size;
-	return input;
 }
 
 enum {
@@ -2863,59 +2849,38 @@ enum {
 };
 
 bool arg_stdout, arg_force, arg_quiet, arg_dll;
-int arg_compressor = kCompressor_Kraken, arg_level = 4;
+int arg_compressor = kCompressor_Kraken, arg_level = 5;
 char arg_direction;
 char *verifyfolder;
 
-#ifdef _MSC_VER
-typedef int WINAPI OodLZ_CompressFunc(int codec, uint8* src_buf, size_t src_len, uint8* dst_buf, int level, void* opts, size_t offs, size_t unused, void* scratch, size_t scratch_size);
-OodLZ_CompressFunc* OodLZ_Compress;
 
-typedef int WINAPI OodLZ_DecompressFunc(uint8* src_buf, int src_len, uint8* dst, size_t dst_size, int fuzz, int crc, int verbose, uint8* dst_base, size_t e, void* cb, void* cb_ctx, void* scratch, size_t scratch_size, int threadPhase);
-OodLZ_DecompressFunc* OodLZ_Decompress;
+EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst, int level) {
 
-HINSTANCE pickDll() {
-	HINSTANCE mod = NULL;
-	int version = 9;
-	char DLL[] = "oo2core_1_win64.dll";
-	while (version >= 0) {
-		DLL[8] = version + '0';
-		mod = LoadLibraryA(DLL);
-		if (mod) break;
-		version--;
-	}
+    int outbytes = CompressBlock_Kraken(src, dst, src_len, level, 0, 0, 0);
 
-	return mod;
+    if (outbytes < 0) error("compress failed");
+
+    return outbytes;
 }
 
-EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst) {
-	HINSTANCE mod = pickDll();
-	if (!mod) return -1;
-	char COMPFUNCNAME[] = "XXdleLZ_Compress";
-	COMPFUNCNAME[0] = 'O';
-	COMPFUNCNAME[1] = 'o';
-	OodLZ_Compress = (OodLZ_CompressFunc*)GetProcAddress(mod, COMPFUNCNAME);
-	int dst_len = OodLZ_Compress(arg_compressor, src, src_len, dst, arg_level, 0, 0, 0, 0, 0);
-	return dst_len;
-}
-#endif
 
-bool Verify(const char *filename, uint8 *output, int outbytes, const char *curfile) {
-	int test_size;
-	byte *test = load_file(filename, &test_size);
-	if (!test) {
-		fprintf(stderr, "file open error: %s\n", filename);
-		return false;
-	}
-	if (test_size != outbytes) {
-		fprintf(stderr, "%s: ERROR: File size difference: %d vs %d\n", filename, outbytes, test_size);
-		return false;
-	}
-	for (int i = 0; i != test_size; i++) {
-		if (test[i] != output[i]) {
-			fprintf(stderr, "%s: ERROR: File difference at 0x%x. Was %d instead of %d\n", curfile, i, output[i], test[i]);
-			return false;
-		}
-	}
-	return true;
-}
+
+//bool Verify(const char *filename, uint8 *output, int outbytes, const char *curfile) {
+//	int test_size;
+//	byte *test = load_file(filename, &test_size);
+//	if (!test) {
+//		fprintf(stderr, "file open error: %s\n", filename);
+//		return false;
+//	}
+//	if (test_size != outbytes) {
+//		fprintf(stderr, "%s: ERROR: File size difference: %d vs %d\n", filename, outbytes, test_size);
+//		return false;
+//	}
+//	for (int i = 0; i != test_size; i++) {
+//		if (test[i] != output[i]) {
+//			fprintf(stderr, "%s: ERROR: File difference at 0x%x. Was %d instead of %d\n", curfile, i, output[i], test[i]);
+//			return false;
+//		}
+//	}
+//	return true;
+//}

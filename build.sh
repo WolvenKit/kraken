@@ -1,7 +1,8 @@
 mkdir build
 mkdir obj
 
-g++ -pedantic \
+g++ -std=c++17 \
+-pedantic \
 -fpermissive \
 -pedantic-errors \
 -Wstrict-aliasing \
@@ -13,4 +14,4 @@ kraken.cpp \
 -O3 \
 -shared \
 -fPIC \
--o build/kraken.so
+-o build/kraken.dylib

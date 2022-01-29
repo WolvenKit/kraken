@@ -1,2 +1,7 @@
 build/
 obj/
+.DS_Store
+
+.idea/
+cmake*/
+oodle.kark

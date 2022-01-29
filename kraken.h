@@ -22,6 +22,7 @@
 	#include <stddef.h>
 	#ifdef __GNUC__
 		// GNU C supports forcing inline, just via a different syntax.
+        // disable this on MinGW compiler
 		#define __forceinline inline __attribute__((always_inline))
 	#else
 		// Fall back to the standardized inline keyword for unknown dialects
@@ -34,6 +35,7 @@
 	#define _BitScanForward(dst, x) (*(dst) = __builtin_ctz(x))
 	#define _BitScanReverse(dst, x) (*(dst) = (__builtin_clz(x) ^ 31))
 
+    // disable this on MinGW compiler
 	static inline uint32_t _rotl(uint32_t x, int n) {
 	  return (((x) << (n)) | ((x) >> (32-(n))));
 	}
@@ -79,4 +81,4 @@ typedef int16_t int16;
 typedef unsigned int uint;
 
 EXPORT int Kraken_Decompress(const byte *src, size_t src_len, byte *dst, size_t dst_len);
-EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst);
+EXPORT int Kraken_Compress(uint8* src, size_t src_len, byte* dst, int level);

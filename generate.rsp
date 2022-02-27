@@ -1,0 +1,15 @@
+--config
+compatible-codegen
+generate-macro-bindings
+multi-file
+unix-types
+--exclude
+CINDEX_VERSION_ENCODE
+CINDEX_VERSION_STRINGIZE
+CINDEX_VERSION_STRINGIZE_
+--file
+kraken.h
+--namespace
+Texconv
+--output
+./sources/Texconv/Interop

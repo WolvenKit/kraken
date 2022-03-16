@@ -61,7 +61,7 @@
     #define IMPORT __declspec(dllimport)
 #elif defined(__GNUC__)
     //  GCC
-    #define EXPORT __attribute__((visibility("default")))
+    #define EXPORT extern "C" __attribute__((visibility("default")))
     #define IMPORT
 #else
     //  do nothing and hope for the best?
